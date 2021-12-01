@@ -1,0 +1,37 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+  
+variables:
+  testProjectName: 'MyTodoApp.Tests'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: "Run dotnet restore"
+  inputs:
+    command: 'restore'
+    projects: '**/$(testProjectName).csproj'
+- task: DotNetCoreCLI@2
+  displayName: "Run dotnet test"
+  inputs:
+    command: 'test'
+    projects: '**/$(testProjectName).csproj'
+    publishTestResults: false
+    arguments: '--settings $(Build.Repository.LocalPath)/$(testProjectName)/coverlet.runsettings --logger trx'
+- task: PublishTestResults@2
+  displayName: "Publish test results"
+  inputs:
+    testResultsFormat: 'VSTest'
+    testResultsFiles: '$(System.DefaultWorkingDirectory)/$(testProjectName)/TestResults/**/*.trx'
+- task: PublishCodeCoverageResults@1
+  displayName: "Publish code coverage results"
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/$(testProjectName)/TestResults/*/coverage.cobertura.xml'
